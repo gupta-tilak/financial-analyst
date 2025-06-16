@@ -1,5 +1,11 @@
+import sys
+import os
+# Ensure the project root is in sys.path for direct script execution
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from src.data_ingestion.financial_news import FinancialNewsIngestion
+
 import asyncio
-from .financial_news import FinancialNewsIngestion
 import json
 from pprint import pprint
 
@@ -35,4 +41,4 @@ async def main():
 
 if __name__ == "__main__":
     # Run the async main function
-    asyncio.run(main()) 
+    asyncio.run(main())
