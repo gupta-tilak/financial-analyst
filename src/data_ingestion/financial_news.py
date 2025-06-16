@@ -4,36 +4,42 @@ import aiohttp
 from datetime import datetime, timedelta
 import pandas as pd
 from typing import List, Dict
+from .config import API_ENDPOINTS, POLYGON_API_KEY
 
 class FinancialNewsIngestion:
     def __init__(self):
-        self.news_sources = {
-            'polygon': 'https://api.polygon.io/v2/reference/news',
-            'alpha_vantage': 'https://www.alphavantage.co/query',
-            'newsapi': 'https://newsapi.org/v2/everything',
-            'reuters': 'https://reuters.com/finance',
-            'bloomberg': 'https://bloomberg.com/markets'
-        }
-        
+        self.news_sources = API_ENDPOINTS
     async def extract_real_time_news(self, tickers: List[str]) -> Dict:
         """Real-time news extraction with streaming processing"""
         news_data = []
         
         for ticker in tickers:
+            print(f"\nFetching news for {ticker}...")
             # Real-time processing as described in search results
             async with aiohttp.ClientSession() as session:
+                # Format the date in the correct format for Polygon API
+                one_hour_ago = (datetime.now() - timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
                 params = {
                     'ticker': ticker,
-                    'published_utc.gte': datetime.now() - timedelta(hours=1),
+                    'published_utc.gte': one_hour_ago,
                     'limit': 50,
-                    'apikey': 'your_api_key'
+                    'apikey': POLYGON_API_KEY
                 }
                 
+                print(f"Making API request to {self.news_sources['polygon']}")
                 async with session.get(self.news_sources['polygon'], params=params) as response:
                     data = await response.json()
+                    print(f"Response status: {response.status}")
+                    if response.status != 200:
+                        print(f"Error response: {data}")
                     news_data.extend(data.get('results', []))
+                    print(f"Found {len(data.get('results', []))} articles for {ticker}")
         
-        return self.transform_news_data(news_data)
+        # Transform the data and convert to dictionary
+        df = self.transform_news_data(news_data)
+        if df.empty:
+            return {}
+        return df.to_dict('records')[0] if len(df) > 0 else {}
     
     def transform_news_data(self, raw_data: List[Dict]) -> pd.DataFrame:
         """Data transformation as per ETL process"""
