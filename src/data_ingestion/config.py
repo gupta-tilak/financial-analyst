@@ -14,4 +14,12 @@ API_ENDPOINTS = {
     'newsapi': 'https://newsapi.org/v2/everything',
     'reuters': 'https://reuters.com/finance',
     'bloomberg': 'https://bloomberg.com/markets'
+}
+
+# Rate Limiting Configuration
+POLYGON_RATE_LIMIT = {
+    'requests_per_minute': 5,  # Conservative limit to avoid 429 errors
+    'max_retries': 3,
+    'base_delay': 30,  # Base delay for exponential backoff (seconds)
+    'enable_jitter': True  # Add random jitter to avoid thundering herd
 } 
