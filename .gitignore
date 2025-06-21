@@ -19,3 +19,6 @@ __pycache__/
 dist/
 build/
 .eggs/
+
+model/ollama_models/
+model/saved_models
