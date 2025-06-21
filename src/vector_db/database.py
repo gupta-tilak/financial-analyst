@@ -1,78 +1,61 @@
 # Vector Database Configuration
-import weaviate
-import openai
 from sentence_transformers import SentenceTransformer
 import numpy as np
+import chromadb
 
 class FinancialVectorDatabase:
-    def __init__(self):
-        # Initialize Weaviate client as recommended for financial applications
-        self.client = weaviate.Client(
-            url="http://localhost:8080",
-            additional_headers={
-                "X-OpenAI-Api-Key": "your-openai-key"
-            }
-        )
-        
-        # Financial-specific embedding model
+    def __init__(self, collection_name="financial_news"):
+        self.client = chromadb.PersistentClient(path="./chroma_db")
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.collection = self.client.get_or_create_collection(
+            name=collection_name,
+            metadata={"hnsw:space": "cosine"} # Using cosine similarity
+        )
+
+    def add_documents(self, documents, metadatas=None, ids=None):
+        """
+        Adds documents to the collection.
+
+        Args:
+            documents (list of str): The documents to add.
+            metadatas (list of dict, optional): Metadata for each document.
+            ids (list of str, optional): Unique IDs for each document.
+        """
+        if not documents:
+            return
+
+        embeddings = self.embedding_model.encode(documents, convert_to_tensor=False).tolist()
         
-        self.setup_financial_schema()
-    
-    def setup_financial_schema(self):
-        """Create schema optimized for financial documents"""
-        # Financial News Schema
-        news_schema = {
-            "class": "FinancialNews",
-            "description": "Financial news articles with market insights",
-            "vectorizer": "text2vec-openai",
-            "properties": [
-                {"name": "title", "dataType": ["text"]},
-                {"name": "content", "dataType": ["text"]},
-                {"name": "ticker", "dataType": ["string[]"]},
-                {"name": "publishedDate", "dataType": ["date"]},
-                {"name": "sentimentScore", "dataType": ["number"]},
-                {"name": "source", "dataType": ["string"]},
-                {"name": "keywords", "dataType": ["string[]"]},
-                {"name": "marketImpact", "dataType": ["string"]}
-            ]
-        }
-        
-        # SEC Filings Schema
-        sec_schema = {
-            "class": "SECFiling",
-            "description": "SEC filings and financial statements",
-            "vectorizer": "text2vec-openai",
-            "properties": [
-                {"name": "cik", "dataType": ["string"]},
-                {"name": "ticker", "dataType": ["string"]},
-                {"name": "filingType", "dataType": ["string"]},
-                {"name": "filingDate", "dataType": ["date"]},
-                {"name": "period", "dataType": ["string"]},
-                {"name": "financialMetrics", "dataType": ["object"]},
-                {"name": "riskFactors", "dataType": ["text"]},
-                {"name": "managementDiscussion", "dataType": ["text"]},
-                {"name": "keyRatios", "dataType": ["object"]}
-            ]
-        }
-        
-        # Company Reports Schema
-        reports_schema = {
-            "class": "CompanyReport",
-            "description": "Earnings calls and company presentations",
-            "vectorizer": "text2vec-openai",
-            "properties": [
-                {"name": "ticker", "dataType": ["string"]},
-                {"name": "reportType", "dataType": ["string"]},
-                {"name": "quarter", "dataType": ["string"]},
-                {"name": "transcript", "dataType": ["text"]},
-                {"name": "keyMetrics", "dataType": ["object"]},
-                {"name": "guidance", "dataType": ["text"]},
-                {"name": "analystQuestions", "dataType": ["text"]},
-                {"name": "managementTone", "dataType": ["string"]}
-            ]
-        }
-        
-        # Create schemas
-        for schema in [news_schema, sec_schema, reports_schema]:
-            self.client.schema.create_class(schema)
+        # ChromaDB requires string IDs. If not provided, create them.
+        if ids is None:
+            # simple hashing for id generation
+            ids = [str(hash(doc)) for doc in documents]
+
+        self.collection.upsert(
+            embeddings=embeddings,
+            documents=documents,
+            metadatas=metadatas,
+            ids=ids
+        )
+
+    def query(self, query_text, n_results=5):
+        """
+        Queries the collection for similar documents.
+
+        Args:
+            query_text (str): The text to search for.
+            n_results (int): The number of results to return.
+
+        Returns:
+            dict: The query results.
+        """
+        query_embedding = self.embedding_model.encode(query_text, convert_to_tensor=False).tolist()
+        results = self.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=n_results
+        )
+        return results
+
+    def get_collection_count(self):
+        """Returns the number of items in the collection."""
+        return self.collection.count()

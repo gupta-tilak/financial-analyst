@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Financial Market Analyst - College Project
+Financial Market Analyst
 Main entry point for the application
 """
 

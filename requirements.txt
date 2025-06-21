@@ -34,3 +34,7 @@ seaborn>=0.12.0
 # Jupyter
 jupyter>=1.0.0
 ipykernel>=6.23.0
+
+chromadb
+sentence-transformers
+langchain-text-splitters
