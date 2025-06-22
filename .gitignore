@@ -22,3 +22,4 @@ build/
 
 model/ollama_models/
 model/saved_models
+model/gguf_models/

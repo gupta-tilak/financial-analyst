@@ -2,8 +2,10 @@
 import requests
 import xml.etree.ElementTree as ET
 from sec_edgar_downloader import Downloader
+from typing import List, Dict
 import schedule
 import time
+import os
 
 class EDGARDataIngestion:
     def __init__(self):

@@ -3,14 +3,41 @@
 import asyncio
 from src.data_ingestion.financial_news import FinancialNewsIngestion
 from src.vector_db.database import FinancialVectorDatabase
-from src.models.llm import FinancialLLM
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# Try to import the llama.cpp version first, fallback to transformers if needed
+try:
+    from src.models.llm import FinancialLLM
+    LLM_CLASS = FinancialLLM
+    print("Using llama.cpp-based LLM implementation")
+except ImportError as e:
+    print(f"llama.cpp LLM not available: {e}")
+    try:
+        from src.models.llm_fallback import FinancialLLMFallback
+        LLM_CLASS = FinancialLLMFallback
+        print("Using transformers-based LLM fallback")
+    except ImportError as e2:
+        print(f"Fallback LLM also not available: {e2}")
+        raise ImportError("No LLM implementation available")
 
 class InvestmentAnalyzer:
     def __init__(self):
         self.news_ingestion = FinancialNewsIngestion()
         self.vector_db = FinancialVectorDatabase()
-        self.llm = FinancialLLM()
+        
+        # Initialize LLM with error handling
+        try:
+            self.llm = LLM_CLASS()
+        except Exception as e:
+            print(f"Error initializing LLM: {e}")
+            print("Trying fallback implementation...")
+            try:
+                from src.models.llm_fallback import FinancialLLMFallback
+                self.llm = FinancialLLMFallback()
+            except Exception as e2:
+                print(f"Fallback also failed: {e2}")
+                raise Exception("Could not initialize any LLM implementation")
+        
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,

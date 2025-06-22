@@ -5,6 +5,7 @@ peft>=0.4.0
 datasets>=2.12.0
 bitsandbytes>=0.41.0
 accelerate>=0.20.0
+llama-cpp-python>=0.2.0
 
 # Data Processing
 pandas>=1.5.0
@@ -30,6 +31,7 @@ python-dotenv>=1.0.0
 tqdm>=4.65.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
+schedule>=1.2.0
 
 # Jupyter
 jupyter>=1.0.0

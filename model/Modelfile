@@ -1,0 +1,14 @@
+FROM ./ollama_models/TinyLlama-1.1B-Financial-LoRA
+
+TEMPLATE """<|system|>
+You are a helpful financial analyst assistant.
+<|user|>
+{{ .Prompt }}
+<|assistant|>
+"""
+
+PARAMETER stop "<|user|>"
+PARAMETER stop "<|system|>"
+PARAMETER temperature 0.1
+PARAMETER top_p 0.9
+PARAMETER num_ctx 2048
