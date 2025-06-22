@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+langchain-text-splitters
+llama-cpp-python
+transformers
+polygon-api-client 
