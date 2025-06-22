@@ -6,3 +6,7 @@ To test the model follow below :
 
 To test the Investment Analyzer :
 1. PYTHONPATH=. python3 src/analysis/investment_analyzer.py
+
+
+Run the frontend : cd frontend/investment-analyzer-ui && npm start
+Run the backend : uvicorn api:app --reload
