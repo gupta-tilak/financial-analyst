@@ -52,10 +52,23 @@ class FinancialVectorDatabase:
         query_embedding = self.embedding_model.encode(query_text, convert_to_tensor=False).tolist()
         results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=n_results
+            n_results=n_results,
+            include=["documents", "metadatas"]  # Explicitly request metadatas
         )
         return results
 
     def get_collection_count(self):
         """Returns the number of items in the collection."""
         return self.collection.count()
+
+    def reset_collection(self):
+        """Drops and recreates the collection to ensure a fresh schema and metadata support."""
+        try:
+            self.client.delete_collection(self.collection.name)
+            print(f"Collection '{self.collection.name}' dropped.")
+        except Exception as e:
+            print(f"Collection drop failed (may not exist yet): {e}")
+        self.collection = self.client.get_or_create_collection(
+            name=self.collection.name,
+            metadata={"hnsw:space": "cosine"}
+        )
